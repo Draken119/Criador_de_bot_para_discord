@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gerador de Script para Bot Discord</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #0f0;
+      font-family: "Courier New", monospace;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .container {
+      background-color: #000;
+      border: 1px solid #0f0;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 24px;
+    }
+
+    input[type="text"],
+    textarea {
+      background-color: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 10px;
+      margin-bottom: 10px;
+      width: 100%;
+    }
+
+    button {
+      background-color: #0f0;
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #000;
+      color: #0f0;
+    }
+
+    .command-box {
+      background-color: #000;
+      border: 1px solid #0f0;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .command-box p {
+      margin: 0;
+    }
+
+    #script-output {
+      background-color: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 10px;
+      width: 100%;
+      resize: none;
+    }
+  </style>
+</head>
+<body>
+  <h2>Gerador de Script para Bot Discord</h2>
+  
+  <h3>Definir Prefixo e Token</h3>
+  <form id="config-form">
+    <label for="prefix-input">Prefixo:</label>
+    <input type="text" id="prefix-input" required>
+    <br>
+    <label for="token-input">Token:</label>
+    <input type="text" id="token-input" required>
+    <br>
+    <button type="button" onclick="setConfig()">Definir Prefixo e Token</button>
+  </form>
+  
+  <div id="command-section" style="display: none;">
+    <h3>Adicionar Comando</h3>
+    <form id="command-form">
+      <label for="command-input">Comando:</label>
+      <input type="text" id="command-input" required>
+      <br>
+      <label for="response-input">Resposta:</label>
+      <input type="text" id="response-input" required>
+      <br>
+      <button type="button" onclick="addCommand()">Adicionar</button>
+    </form>
+    
+    <h3>Comandos Adicionados</h3>
+    <div id="command-container"></div>
+    
+    <button type="button" onclick="toggleLevelScript()">Adicionar Nível</button>
+    
+    <div id="level-script-section" style="display: none;">
+      <h3>Script de Nível</h3>
+      <p>Este script adicionará a funcionalidade de subir de nível a cada 50 mensagens enviadas.</p>
+      <button type="button" onclick="addLevelScript()">Adicionar Script de Nível</button>
+    </div>
+  </div>
+  
+  <h3>Outras Funcionalidades</h3>
+  <button type="button" onclick="addTranslateScript()">Traduzir</button>
+  <button type="button" onclick="addSearchScript()">Pesquisar</button>
+  
+  <h3>Gerar Script</h3>
+  <button type="button" onclick="generateScript()">Gerar o Script</button>
+  
+  <h3>Script Gerado</h3>
+  <textarea id="script-output" rows="10" cols="80" readonly></textarea>
+  
+  <script>
+    let prefix = '';
+    let token = '';
+    let commands = [];
+    let includeLevelScript = false;
+
+    function setConfig() {
+      prefix = document.getElementById('prefix-input').value;
+      token = document.getElementById('token-input').value;
+      
+      if (prefix && token) {
+        document.getElementById('config-form').style.display = 'none';
+        document.getElementById('command-section').style.display = 'block';
+      }
+    }
+
+    function addCommand() {
+      const command = document.getElementById('command-input').value;
+      const response = document.getElementById('response-input').value;
+      
+      if (command && response) {
+        commands.push({ command, response });
+        displayCommands();
+        clearInputs();
+      }
+    }
+
+    function displayCommands() {
+      const commandContainer = document.getElementById('command-container');
+      commandContainer.innerHTML = '';
+
+      commands.forEach((cmd) => {
+        const commandBox = document.createElement('div');
+        commandBox.classList.add('command-box');
+
+        const commandElement = document.createElement('p');
+        commandElement.innerText = `Comando: ${cmd.command}`;
+        commandBox.appendChild(commandElement);
+
+        const responseElement = document.createElement('p');
+        responseElement.innerText = `Resposta: ${cmd.response}`;
+        commandBox.appendChild(responseElement);
+
+        commandContainer.appendChild(commandBox);
+      });
+    }
+
+    function clearInputs() {
+      document.getElementById('command-input').value = '';
+      document.getElementById('response-input').value = '';
+    }
+
+    function toggleLevelScript() {
+      const levelScriptSection = document.getElementById('level-script-section');
+      includeLevelScript = !includeLevelScript;
+      
+      if (includeLevelScript) {
+        levelScriptSection.style.display = 'block';
+      } else {
+        levelScriptSection.style.display = 'none';
+      }
+    }
+
+    function addLevelScript() {
+      const levelScript = `# Contador de mensagens
+  contador = 0
+
+@client.event
+async def on_message(message):
+  global contador
+  if message.author == client.user:
+    return
+    
+  contador += 1
+  
+  if contador % 50 == 0:
+    nivel = contador // 50 * 5
+    await message.channel.send(f'Parabéns {message.author.mention}, seu nível subiu para {nivel}!')
+    
+  await client.process_commands(message)\n\n`;
+
+      commands.push({ command: 'level', response: levelScript });
+      displayCommands();
+      
+      toggleLevelScript();
+    }
+
+    function addTranslateScript() {
+      const translateScript = `# Comando de Tradução
+@client.command()
+async def traduzir(ctx, *, texto):
+  # Implemente aqui a lógica de tradução
+  await ctx.send('Tradução: ' + texto)\n\n`;
+
+      commands.push({ command: 'traduzir', response: translateScript });
+      displayCommands();
+    }
+
+    function addSearchScript() {
+      const searchScript = `# Comando de Pesquisa
+@client.command()
+async def pesquisar(ctx, *, pesquisa):
+  # Implemente aqui a lógica de pesquisa
+  await ctx.send('Pesquisando: ' + pesquisa)\n\n`;
+
+      commands.push({ command: 'pesquisar', response: searchScript });
+      displayCommands();
+    }
+
+    function generateScript() {
+      let script = `import discord
+from discord.ext import commands
+
+TOKEN = '${token}'
+
+intents = discord.Intents.default()
+intents.message_content = True
+
+client = commands.Bot(command_prefix='${prefix}', intents=intents)
+
+@client.event
+async def on_ready():
+  print(f'Bot conectado como {client.user.name}')
+
+@client.event
+async def on_message(message):
+  if message.author == client.user:
+    return\n`;
+
+      commands.forEach((cmd) => {
+        script += `
+  if message.content.startswith('${prefix}${cmd.command}'):
+    await message.channel.send('${cmd.response}')`;
+      });
+
+      if (includeLevelScript) {
+        script += `
+
+${commands.find((cmd) => cmd.command === 'level').response}`;
+      }
+
+      script += `
+
+client.run(TOKEN)`;
+
+      document.getElementById('script-output').value = script;
+    }
+  </script>
+</body>
+</html>
